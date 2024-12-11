@@ -17,7 +17,10 @@ class CharacterNormalizer:
             "SGT DOAKES": "JAMES DOAKES",
             "SERGEANT DOAKES": "JAMES DOAKES",
             "RITA BENNETT": "RITA",
-            "RITA MORGAN": "RITA"
+            "RITA MORGAN": "RITA",
+            "AUDREY": "AUDREY",
+            "HARRISON": "HARRISON",
+            "MOLLY": "MOLLY"
         }
         self.case_insensitive_mappings = {k.upper(): v for k, v in self.name_mappings.items()}
     
