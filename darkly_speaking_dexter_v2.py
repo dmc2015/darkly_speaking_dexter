@@ -25,6 +25,11 @@ class DexterScraper:
         retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         
+        
+        self.sound_effect_words = ['music', 'rings', 'click', 'sound', 'phone']
+        self.action_words = ['grunting', 'groaning']  # NEW LINE
+
+
         # Setup logging
         logging.basicConfig(
             level=logging.INFO,
@@ -159,8 +164,11 @@ class DexterScraper:
                 'clears throat', 'spits', 'vomiting'
             }
             
-            if not any(word.lower() in potential_speaker.lower() for word in non_speaker_words):
+            # if not any(word.lower() in potential_speaker.lower() for word in non_speaker_words):
+            #     return potential_speaker, remaining_text.strip()
+            if not any(word.lower() in potential_speaker.lower() for word in self.sound_effect_words):
                 return potential_speaker, remaining_text.strip()
+
         return None, text
 
     def is_direct_speaker_introduction(self, text: str) -> Tuple[Optional[str], str]:

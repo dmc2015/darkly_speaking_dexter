@@ -12,6 +12,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 from character_name_utils import CharacterNormalizer
 from transcript_validator import TranscriptValidator
+import pdb
 
 class DexterScraper:
     def __init__(self, base_url: str = "https://transcripts.foreverdreaming.org/viewforum.php?f=187"):
@@ -25,6 +26,14 @@ class DexterScraper:
         retries = Retry(total=3, backoff_factor=1, status_forcelist=[500, 502, 503, 504])
         self.session.mount('https://', HTTPAdapter(max_retries=retries))
         
+        self.sound_effect_words = ['music', 'rings', 'click', 'sound', 'phone', "DOOR OPENS", 'EXHALES', 'CLEARS THROAT', 'TENSE MUSIC', 'SNAPS FINGERS', 'PHONE RINGING', 'SIGHS', 'SCOFFS', '\"A WOLF AT THE DOOR\" BY RADIOHEAD', 'CAR ENGINE REVVING UP OUTSIDE', 'CAR DOORS OPEN', 'CAR DOORS OPEN', 'DOOR CLOSES']
+        self.action_words = ['grunting', 'groaning', 'grunts', 'CHUCKLES', 'laughter', 'INDISTINCT', 'chatter', 'speaking spanish', 'silverware', 'clattering']
+        self.context_buffer = []
+        
+        self.show_name = None
+        self.season = None
+        self.episode = None
+          
         # Setup logging
         logging.basicConfig(
             level=logging.INFO,
@@ -53,6 +62,7 @@ class DexterScraper:
     def get_episode_links(self) -> List[str]:
         """Retrieves all episode transcript links from the forum page."""
         try:
+            ######
             response = self.session.get(self.base_url, timeout=30)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -81,11 +91,13 @@ class DexterScraper:
             if not links:
                 self.logger.warning("No episode links found within topics list")
                 return []
-            
+            ########
             # Extract and process all hrefs
             episode_links = []
             for link in links:
+            # for link in [1]:
                 href = link.get('href')
+                # href = "viewtopic.php?t=11353&sid=cf62ed29258ead132269461d8a544092"
                 if href:
                     full_url = urljoin(self.base_url, href)
                     episode_links.append(full_url)
@@ -163,28 +175,108 @@ class DexterScraper:
 
     def parse_line(self, text: str, line_number: int) -> Optional[Dict]:
         """Parse a single line of dialogue."""
+        
+        # if "This is Chief Angel" in text:
+        #     pdb.set_trace()
+                
         text = self.clean_text(text)
+
         if not text:
             return None
+          
 
+        print(f"\nProcessing: '{text}'") 
+        #######
+        # Check for bracketed content anywhere in the line
+        
+        bracket_start = text.find('[')
+        bracket_end = text.find(']')
+        
+       
+        
+        if bracket_start != -1 and bracket_end != -1:
+            # Extract the bracketed content
+            bracketed_content = text[bracket_start + 1:bracket_end].strip()
+            remaining_text = text[bracket_end + 1:].strip()
+            
+            print(f"Bracketed content: '{bracketed_content}'")  # Debug print
+            print(f"Remaining text: '{remaining_text}'")  # Debug print
+            
+            # Split bracketed content into words
+            words = bracketed_content.split()
+            
+            # Look for character name
+            for word in words:
+                word_upper = word.upper()
+                if word_upper in self.name_normalizer.case_insensitive_mappings:
+                    self.current_speaker = self.name_normalizer.normalize(word_upper)
+                    print(f"Found speaker: {self.current_speaker}")  # Debug print
+                    words.remove(word)  # Remove the name from words
+                    break
+            
+            # Any remaining words in brackets are context
+            if words:
+                self.context_buffer.extend(words)
+                print(f"Added to context: {words}")  # Debug print
+            
+            # if "This is Chief Angel" in text:
+            #     pdb.set_trace()
+            
+            # If there's remaining text, treat it as dialogue
+            if remaining_text:
+                dialogue_entry = {
+                    "speaker": self.current_speaker,
+                    "text": remaining_text,
+                    "type": "spoken",
+                    "line_number": line_number
+                }
+            
+                if self.context_buffer:
+                    dialogue_entry["context"] = self.context_buffer.copy()
+                    self.context_buffer.clear()
+                return dialogue_entry
+            return None
+
+            
+        #######
+        
         # Check for context markers
-        if text.startswith('[') and any(word.lower() in text.lower() 
-                                      for word in ['music', 'rings', 'click', 'sound', 'phone']):
-            return {
-                "context": [text],
-                "line_number": line_number
-            }
+        # if text.startswith('[') and any(word.lower() in text.lower() 
+        #                               for word in ['music', 'rings', 'click', 'sound', 'phone']):
+        #     return {
+        #         "context": [text],
+        #         "line_number": line_number
+        #     }
 
+
+        # dialogue_entry = {
+        #     "speaker": self.current_speaker,
+        #     "text": remaining_text,
+        #     "type": "spoken",
+        #     "line_number": line_number
+        # }
+            
         # First check for speaker in brackets
+        # if self.context_buffer:
+        #     dialogue_entry["context"] = self.context_buffer.copy()
+        #     self.context_buffer.clear()
+                    
         speaker, remaining_text = self.is_speaker_line(text)
         if speaker:
             speaker_info = self.name_normalizer.get_speaker_info(speaker)
             self.current_speaker = speaker_info['normalized_name']
+
+            if self.context_buffer:
+                context = self.context_buffer.copy()
+                self.context_buffer.clear()
+            else:
+              context = []
             if remaining_text:
                 return {
                     "speaker": speaker_info['normalized_name'],
                     "original_speaker": speaker_info['original_name'],
                     "text": remaining_text,
+                    "context": context,
                     "type": speaker_info['type'],
                     "line_number": line_number
                 }
@@ -195,21 +287,33 @@ class DexterScraper:
             if speaker:
                 speaker_info = self.name_normalizer.get_speaker_info(speaker)
                 self.current_speaker = speaker_info['normalized_name']
+                if self.context_buffer:
+                    context = self.context_buffer.copy()
+                    self.context_buffer.clear()
+                else:
+                    context = []
                 return {
                     "speaker": speaker_info['normalized_name'],
                     "original_speaker": speaker_info['original_name'],
                     "text": full_text,
+                    "context": context,
                     "type": speaker_info['type'],
                     "line_number": line_number
                 }
 
         # If we have a current speaker, attribute the line to them
         if self.current_speaker and text:
+            if self.context_buffer:
+                    context = self.context_buffer.copy()
+                    self.context_buffer.clear()
+            else:
+              context = []
             return {
                 "speaker": self.current_speaker,
                 "original_speaker": self.current_speaker,
                 "text": text,
                 "type": "spoken",
+                "context": context,
                 "line_number": line_number
             }
 
@@ -228,7 +332,24 @@ class DexterScraper:
             response = self.session.get(url, timeout=30)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
+            # pdb.set_trace()
             
+            episode_title_data = soup.find('h3', class_="first")
+
+            # Extract the text from the tag
+            text = episode_title_data.a.text
+
+            # Split and parse the details
+            series_title_season_episode, episode_title = text.split(' - ')
+            if ":" in series_title_season_episode:
+                series_subtitle, season_episode = series_title_season_episode.split(':')
+                self.show_name = f"Dexter: {series_subtitle}"
+                self.season, self.episode = (string.strip() for string in season_episode.split('x'))
+            else:
+                self.season, self.episode = series_title_season_episode.split('x')
+                self.show_name = "Dexter"
+
+
             content = soup.find('div', class_='content')
             if not content:
                 content = soup.find('div', class_='postbody')
@@ -271,6 +392,7 @@ class DexterScraper:
             self.logger.error(f"Failed to parse episode {url}: {e}")
             return None
         except Exception as e:
+            pdb.set_trace()
             self.logger.error(f"Unexpected error parsing {url}: {e}")
             return None
 
@@ -293,7 +415,7 @@ class DexterScraper:
                 if episode_data:
                     self.episodes_data.append(episode_data)
                     self.logger.info(f"Successfully scraped episode: {episode_data['title']} "
-                                   f"({len(episode_data['dialogue'])} lines)")
+                                  f"({len(episode_data['dialogue'])} lines)")
                 
                 time.sleep(delay + (random.random() * 0.5))
                 
@@ -317,18 +439,22 @@ class DexterScraper:
                     for ep in self.episodes_data 
                     for d in ep['dialogue']
                     if 'speaker' in d
-                ))
+                )),
+                "show_name": self.show_name,
+                "season": self.season,
+                "episode": self.episode
             }
             
             data = {
                 'metadata': metadata,
-                'episodes': self.episodes_data
+                'episodes': self.episodes_data[0:10]
             }
             
             # Validate data before saving
             validator = TranscriptValidator()
-            is_valid, validation_results = validator.validate_dataset(data)
             
+            is_valid, validation_results = validator.validate_dataset(data)
+            # pdb.set_trace()
             if not is_valid:
                 self.logger.error("Data validation failed:")
                 for error in validation_results['errors']:

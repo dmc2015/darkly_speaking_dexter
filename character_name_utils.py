@@ -5,22 +5,32 @@ class CharacterNormalizer:
     
     def __init__(self):
         self.name_mappings = {
+            "DEXTER": "DEXTER",
             "DEX": "DEXTER",
             "DEXTER MORGAN": "DEXTER",
+            "DEBRA": "DEBRA",
             "DEB": "DEBRA",
             "DEBRA MORGAN": "DEBRA",
+            "BATISTA": "BATISTA",
             "ANGEL": "BATISTA",
             "ANGEL BATISTA": "BATISTA",
+            "LAGUERTA":  "LAGUERTA",
             "LAGUERTA": "MARIA LAGUERTA",
             "MARIA": "MARIA LAGUERTA",
+            "DOAKES":  "DOAKES",
             "DOAKES": "JAMES DOAKES",
             "SGT DOAKES": "JAMES DOAKES",
             "SERGEANT DOAKES": "JAMES DOAKES",
+            "RITA": "RITA",
             "RITA BENNETT": "RITA",
             "RITA MORGAN": "RITA",
             "AUDREY": "AUDREY",
             "HARRISON": "HARRISON",
-            "MOLLY": "MOLLY"
+            "MOLLY": "MOLLY",
+            "CHIEF ANGELA BISHOP": "CHIEF ANGELA BISHOP",
+            "ANGELA": "CHIEF ANGELA BISHOP",
+            "BISHOP":  "CHIEF ANGELA BISHOP",
+            "CHIEF BISHOP": "CHIEF ANGELA BISHOP"
         }
         self.case_insensitive_mappings = {k.upper(): v for k, v in self.name_mappings.items()}
     
