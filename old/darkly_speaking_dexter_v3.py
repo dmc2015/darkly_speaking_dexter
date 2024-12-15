@@ -10,8 +10,8 @@ from pathlib import Path
 import logging
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from character_name_utils import CharacterNormalizer
-from transcript_validator import TranscriptValidator
+from utils.character_name import CharacterNormalizer
+from utils.transcript_validator import TranscriptValidator
 import pdb
 
 
