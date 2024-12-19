@@ -3,7 +3,7 @@ name: Sync Files with Google Drive
 on:
   push:
     branches:
-      - gpt-2  # You can adjust this to your desired branches
+      - gpt-2  # Adjust to your desired branch
 
 jobs:
   sync_to_drive:
@@ -20,26 +20,23 @@ jobs:
 
     - name: Install gdrive CLI
       run: |
-        # Ensure wget is installed and try downloading the binary
+        # Ensure wget is installed and update system
         sudo apt-get update -y
         sudo apt-get install wget -y
+        sudo apt-get install unzip -y  # Install unzip in case we use zip files
 
-        # Clear any previous installations of gdrive (just in case)
+        # Clear previous installations of gdrive (just in case)
         sudo rm -f /usr/local/bin/gdrive
 
-        # Download gdrive CLI tool
-        wget -v https://github.com/prasmussen/gdrive/releases/download/2.1.0/gdrive-linux-x64 -O /tmp/gdrive-linux-x64
-        if [ ! -f /tmp/gdrive-linux-x64 ]; then
-          echo "Download failed"
-          exit 1
-        fi
+        # Download the tar.gz release of gdrive from the GitHub releases page
+        wget https://github.com/prasmussen/gdrive/archive/refs/tags/2.1.0.tar.gz -O /tmp/gdrive-linux-x64.tar.gz
 
-        # Make it executable
-        chmod +x /tmp/gdrive-linux-x64
-        
-        # Move to local bin directory
+        # Extract the tar.gz file
+        tar -xzvf /tmp/gdrive-linux-x64.tar.gz -C /tmp
+
+        # Move the binary to the local bin directory
         sudo mv /tmp/gdrive-linux-x64 /usr/local/bin/gdrive
-        
+
         # Verify the gdrive installation
         gdrive version
 
