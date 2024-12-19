@@ -28,6 +28,9 @@ jobs:
         # Clear previous installations of gdrive (just in case)
         sudo rm -f /usr/local/bin/gdrive
 
+        # Create tmp
+        mkdir /tmp
+
         # Download the tar.gz release of gdrive from the GitHub releases page
         wget https://github.com/prasmussen/gdrive/archive/refs/tags/2.1.0.tar.gz -O /tmp/gdrive-linux-x64.tar.gz
 
