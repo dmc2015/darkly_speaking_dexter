@@ -28,17 +28,17 @@ jobs:
         # Clear previous installations of gdrive (just in case)
         sudo rm -f /usr/local/bin/gdrive
 
-        # Create tmp
-        mkdir /tmp
-
         # Download the tar.gz release of gdrive from the GitHub releases page
         wget https://github.com/prasmussen/gdrive/archive/refs/tags/2.1.0.tar.gz -O /tmp/gdrive-linux-x64.tar.gz
 
         # Extract the tar.gz file
         tar -xzvf /tmp/gdrive-linux-x64.tar.gz -C /tmp
 
-        # Move the binary to the local bin directory
-        sudo mv /tmp/gdrive-linux-x64 /usr/local/bin/gdrive
+        # List the contents of /tmp to inspect where gdrive is extracted
+        ls -la /tmp
+
+        # Move the binary to the local bin directory (adjusting path based on the ls output)
+        sudo mv /tmp/gdrive-2.1.0/gdrive /usr/local/bin/gdrive
 
         # Verify the gdrive installation
         gdrive version
