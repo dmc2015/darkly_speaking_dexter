@@ -24,8 +24,11 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install wget -y
 
+        # Clear any previous installations of gdrive (just in case)
+        sudo rm -f /usr/local/bin/gdrive
+
         # Download gdrive CLI tool
-        wget -q https://github.com/prasmussen/gdrive/releases/download/2.1.0/gdrive-linux-x64 -O /tmp/gdrive-linux-x64
+        wget -v https://github.com/prasmussen/gdrive/releases/download/2.1.0/gdrive-linux-x64 -O /tmp/gdrive-linux-x64
         if [ ! -f /tmp/gdrive-linux-x64 ]; then
           echo "Download failed"
           exit 1
@@ -36,6 +39,9 @@ jobs:
         
         # Move to local bin directory
         sudo mv /tmp/gdrive-linux-x64 /usr/local/bin/gdrive
+        
+        # Verify the gdrive installation
+        gdrive version
 
     - name: Move data folder to temporary location
       run: |
