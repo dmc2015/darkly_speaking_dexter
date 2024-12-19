@@ -74,7 +74,7 @@ class DexterScraper:
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
-            handlers=[logging.FileHandler("scraper.log"), logging.StreamHandler()],
+            handlers=[logging.FileHandler("logs/scraper.log"), logging.StreamHandler()],
         )
         self.logger = logging.getLogger(__name__)
 
@@ -428,7 +428,7 @@ class DexterScraper:
                 self.logger.error(f"Error scraping {link}: {e}")
                 continue
 
-    def save_to_json(self, filename: str = "dexter_transcripts.json"):
+    def save_to_json(self, filename: str = "data/dexter_transcripts.json"):
         """Save scraped data to a JSON file."""
         try:
             output_path = Path(filename)

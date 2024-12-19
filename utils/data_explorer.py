@@ -8,7 +8,7 @@ from pprint import pprint
 
 
 class TranscriptExplorer:
-    def __init__(self, json_path: str = "dexter_transcripts.json"):
+    def __init__(self, json_path: str = "data/dexter_transcripts.json"):
         with open(json_path, "r", encoding="utf-8") as f:
             self.data = json.load(f)
         self.episodes = self.data["episodes"]

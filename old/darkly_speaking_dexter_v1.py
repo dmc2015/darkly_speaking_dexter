@@ -10,7 +10,7 @@ from pathlib import Path
 import logging
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-from character_name_utils import CharacterNormalizer
+from utils.character_name import CharacterNormalizer
 
 
 class DexterScraper:
@@ -34,7 +34,7 @@ class DexterScraper:
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s - %(levelname)s - %(message)s",
-            handlers=[logging.FileHandler("scraper.log"), logging.StreamHandler()],
+            handlers=[logging.FileHandler("logs/scraper.log"), logging.StreamHandler()],
         )
         self.logger = logging.getLogger(__name__)
 
@@ -224,7 +224,7 @@ class DexterScraper:
             except Exception as e:
                 self.logger.error(f"Error scraping {link}: {e}")
 
-    def save_to_json(self, filename: str = "dexter_transcripts.json"):
+    def save_to_json(self, filename: str = "data/dexter_transcripts.json"):
         """Validating scraped data prior to saving JSON file."""
 
         validator = TranscriptValidator()
