@@ -382,14 +382,17 @@ class DexterScraper:
             return {
                 "title": episode_title,
                 "url": url,
+                "show_name": self.show_name,
+                "season": self.season,
+                "episode": self.episode,
                 "dialogue": dialogue,
                 "metadata": {
                     "scraped_at": time.strftime("%Y-%m-%d %H:%M:%S"),
                     "total_lines": len(dialogue),
                     "unique_speakers": len(
                         set(d["speaker"] for d in dialogue if "speaker" in d)
-                    ),
-                },
+                    )
+                }
             }
         except requests.RequestException as e:
             self.logger.error(f"Failed to parse episode {url}: {e}")
@@ -448,10 +451,7 @@ class DexterScraper:
                         for d in ep["dialogue"]
                         if "speaker" in d
                     )
-                ),
-                "show_name": self.show_name,
-                "season": self.season,
-                "episode": self.episode,
+                )
             }
 
             data = {"metadata": metadata, "episodes": self.episodes_data[0:10]}

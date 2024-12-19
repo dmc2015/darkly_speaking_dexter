@@ -24,15 +24,14 @@ class TranscriptValidator:
         for field in self.episode_required_fields:
             if field not in episode_data:
                 self.validation_errors.append(
-                    f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Missing required field '{field}'"
+                    f"Episode {episode_index}: Missing required field '{field}'"
                 )
 
         if not self.validation_errors:
             # Validate title
             if not episode_data["title"] or not isinstance(episode_data["title"], str):
-                # pdb.set_trace()
                 self.validation_errors.append(
-                    f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Invalid or empty title"
+                    f"Episode {episode_index}: Invalid or empty title"
                 )
 
             # Validate metadata
@@ -51,14 +50,14 @@ class TranscriptValidator:
         for field in self.metadata_required_fields:
             if field not in metadata:
                 self.validation_errors.append(
-                    f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Missing metadata field '{field}'"
+                    f"Episode {episode_index}: Missing metadata field '{field}'"
                 )
                 return
 
         # Validate numerical fields
         if not isinstance(metadata["total_lines"], int) or metadata["total_lines"] < 0:
             self.validation_errors.append(
-                f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Invalid total_lines count"
+                f"Episode {episode_index}: Invalid total_lines count"
             )
 
         if (
@@ -66,7 +65,7 @@ class TranscriptValidator:
             or metadata["unique_speakers"] < 0
         ):
             self.validation_errors.append(
-                f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Invalid unique_speakers count"
+                f"Episode {episode_index}: Invalid unique_speakers count"
             )
 
     def _validate_dialogue(
@@ -75,7 +74,7 @@ class TranscriptValidator:
         """Validate dialogue entries."""
         if not dialogue:
             self.validation_warnings.append(
-                f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Empty dialogue list"
+                f"Episode {episode_index}: Empty dialogue list"
             )
             return
 
@@ -87,18 +86,18 @@ class TranscriptValidator:
             # Check line number sequence
             if "line_number" not in entry:
                 self.validation_errors.append(
-                    f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Missing line number at position {i}"
+                    f"Episode {episode_index}: Missing line number at position {i}"
                 )
             else:
                 if entry["line_number"] in line_numbers:
                     self.validation_errors.append(
-                        f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Duplicate line number {entry['line_number']}"
+                        f"Episode {episode_index}: Duplicate line number {entry['line_number']}"
                     )
                 line_numbers.add(entry["line_number"])
 
             if "speaker" not in entry or "text" not in entry or "type" not in entry:
                 self.validation_warnings.append(
-                    f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Missing required dialogue fields at line {entry['line_number']}"
+                    f"Episode {episode_index}: Missing required dialogue fields at line {entry['line_number']}"
                 )
             else:
                 # Track speaker consistency
@@ -108,15 +107,15 @@ class TranscriptValidator:
                 else:
                     consecutive_empty_speakers += 1
                     if consecutive_empty_speakers > 5:
-                        self.validation_warnings.append(
-                            f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Possible missing speaker attribution "
-                            f"around line {entry['line_number']}"
-                        )
+                      self.validation_warnings.append(
+                          f"Episode {episode_index}: Possible missing speaker attribution "
+                          f"around line {entry['line_number']}"
+                      )
 
                 # Validate dialogue type
                 if entry["type"] not in {"spoken", "voiceover"}:
                     self.validation_warnings.append(
-                        f"Show: {metadata['show_name']}, Season: {metadata['season']}, Episode#: {metadata['episode']}, Episode {episode_index}: Invalid dialogue type '{entry['type']}' "
+                        f"Episode {episode_index}: Invalid dialogue type '{entry['type']}' "
                         f"at line {entry['line_number']}"
                     )
 
@@ -141,7 +140,6 @@ class TranscriptValidator:
 
         # Validate each episode
         for i, episode in enumerate(data["episodes"]):
-            # pdb.set_trace()
             is_valid, errors, warnings = self.validate_episode(
                 episode, data["metadata"], i
             )
@@ -158,9 +156,6 @@ class TranscriptValidator:
             "source",
             "total_dialogue_lines",
             "unique_speakers",
-            "show_name",
-            "season",
-            "episode",
         }
 
         return all(field in metadata for field in required_fields)
