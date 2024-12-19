@@ -1,0 +1,38 @@
+name: Sync Files with Google Drive
+
+on:
+  push:
+    branches:
+      # - main
+      # - development
+      # - feature/*
+      - gpt-2
+
+jobs:
+  sync_to_drive:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout the code
+      uses: actions/checkout@v2
+
+    - name: Set up Google Cloud authentication
+      uses: google-github-actions/auth@v0
+      with:
+        credentials_json: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_KEY }}
+
+    - name: Install gdrive CLI
+      run: |
+        sudo apt-get install -y gdrive-cli || pip install gdrive-cli
+
+    - name: Move data folder to temporary location
+      run: |
+        mv data /tmp/data_backup
+
+    - name: Upload to Google Drive
+      run: |
+        gdrive-cli upload --recursive . --folder-id ${{ secrets.GDRIVE_FOLDER_ID }}
+
+    - name: Move data folder back
+      run: |
+        mv /tmp/data_backup data

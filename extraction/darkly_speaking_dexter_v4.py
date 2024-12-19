@@ -413,7 +413,7 @@ class DexterScraper:
 
         self.logger.info(f"Beginning to scrape {total_episodes} episodes")
 
-        for idx, link in enumerate(episode_links, 1):
+        for idx, link in enumerate([episode_links[0]], 1):
             self.logger.info(f"Scraping episode {idx}/{total_episodes}: {link}")
 
             try:
