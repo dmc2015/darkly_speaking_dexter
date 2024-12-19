@@ -3,10 +3,7 @@ name: Sync Files with Google Drive
 on:
   push:
     branches:
-      # - main
-      # - development
-      # - feature/*
-      - gpt-2
+      - gpt-2  # You can adjust this to your desired branches
 
 jobs:
   sync_to_drive:
@@ -23,7 +20,10 @@ jobs:
 
     - name: Install gdrive CLI
       run: |
-        sudo apt-get install -y gdrive-cli || pip install gdrive-cli
+        # Download and install gdrive (CLI tool for Google Drive)
+        wget -q https://github.com/prasmussen/gdrive/releases/download/2.1.0/gdrive-linux-x64
+        chmod +x gdrive-linux-x64
+        sudo mv gdrive-linux-x64 /usr/local/bin/gdrive
 
     - name: Move data folder to temporary location
       run: |
@@ -31,7 +31,7 @@ jobs:
 
     - name: Upload to Google Drive
       run: |
-        gdrive-cli upload --recursive . --folder-id ${{ secrets.GDRIVE_FOLDER_ID }}
+        gdrive upload --recursive . --folder ${{ secrets.GDRIVE_FOLDER_ID }}
 
     - name: Move data folder back
       run: |
