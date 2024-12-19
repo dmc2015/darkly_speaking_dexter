@@ -20,10 +20,22 @@ jobs:
 
     - name: Install gdrive CLI
       run: |
-        # Download and install gdrive (CLI tool for Google Drive)
-        wget -q https://github.com/prasmussen/gdrive/releases/download/2.1.0/gdrive-linux-x64
-        chmod +x gdrive-linux-x64
-        sudo mv gdrive-linux-x64 /usr/local/bin/gdrive
+        # Ensure wget is installed and try downloading the binary
+        sudo apt-get update -y
+        sudo apt-get install wget -y
+
+        # Download gdrive CLI tool
+        wget -q https://github.com/prasmussen/gdrive/releases/download/2.1.0/gdrive-linux-x64 -O /tmp/gdrive-linux-x64
+        if [ ! -f /tmp/gdrive-linux-x64 ]; then
+          echo "Download failed"
+          exit 1
+        fi
+
+        # Make it executable
+        chmod +x /tmp/gdrive-linux-x64
+        
+        # Move to local bin directory
+        sudo mv /tmp/gdrive-linux-x64 /usr/local/bin/gdrive
 
     - name: Move data folder to temporary location
       run: |
