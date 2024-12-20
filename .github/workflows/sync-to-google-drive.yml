@@ -13,102 +13,70 @@ jobs:
     - name: Checkout the code
       uses: actions/checkout@v2
 
-    - name: Set up Google Cloud authentication
-      uses: google-github-actions/auth@v1
+    - name: Set up Python environment
+      uses: actions/setup-python@v2
       with:
-        credentials_json: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_KEY }}
-
-    - name: Set up Go environment
-      uses: actions/setup-go@v3
-      with:
-        go-version: '1.19'  # Adjust to your Go version
+        python-version: '3.x'  # Adjust to your Python version
 
     - name: Install dependencies
       run: |
-        go mod tidy
-        go mod vendor
+        python -m pip install --upgrade pip
+        pip install google-api-python-client google-auth-httplib2 google-auth-oauthlib
 
-    - name: Create Go script to upload files
+    - name: Create Python script to upload files
       run: |
-        # Create the Go script to sync files to Google Drive
+        # Create the Python script to sync files to Google Drive
         echo '
-        package main
+        import os
+        import io
+        from google.oauth2.service_account import Credentials
+        from googleapiclient.discovery import build
+        from googleapiclient.http import MediaFileUpload
 
-        import (
-            "context"
-            "fmt"
-            "log"
-            "os"
-            "path/filepath"
-
-            "google.golang.org/api/drive/v3"
-            "google.golang.org/api/googleapi"
-            "golang.org/x/oauth2/google"
-        )
-
-        func uploadFile(srv *drive.Service, filePath string, folderId string) (*drive.File, error) {
-            file, err := os.Open(filePath)
-            if err != nil {
-                return nil, err
+        # Upload file function
+        def upload_file(service, file_path, folder_id):
+            file_name = os.path.basename(file_path)
+            file_metadata = {
+                "name": file_name,
+                "parents": [folder_id]
             }
-            defer file.Close()
+            media = MediaFileUpload(file_path, resumable=True)
+            request = service.files().create(
+                media_body=media,
+                body=file_metadata
+            )
+            response = request.execute()
+            return response
 
-            fileName := filepath.Base(filePath)
-            fileMetadata := &drive.File{
-                Name:    fileName,
-                Parents: []string{folderId},
-            }
+        def main():
+            # Load service account credentials
+            creds = Credentials.from_service_account_file(
+                "data/darklyspeakingdexter-c637f22f8d1c.json",
+                scopes=["https://www.googleapis.com/auth/drive"]
+            )
 
-            fileRes, err := srv.Files.Create(fileMetadata).
-                Media(file).
-                Fields("id, name").
-                Do()
-            if err != nil {
-                return nil, err
-            }
-            return fileRes, nil
-        }
+            # Build the Drive API client
+            service = build("drive", "v3", credentials=creds)
 
-        func main() {
-            ctx := context.Background()
+            folder_id = os.getenv("GDRIVE_FOLDER_ID")
+            if not folder_id:
+                raise ValueError("No folder ID found in environment variables")
 
-            // Create the Drive service
-            b, err := os.ReadFile("data/darklyspeakingdexter-c637f22f8d1c.json")
-            if err != nil {
-                log.Fatalf("Unable to read service account credentials file: %v", err)
-            }
+            # Specify the file to upload
+            file_path = "data/my_file.txt"  # Modify as needed
+            uploaded_file = upload_file(service, file_path, folder_id)
 
-            config, err := google.JWTConfigFromJSON(b, drive.DriveFileScope)
-            if err != nil {
-                log.Fatalf("Unable to parse service account credentials: %v", err)
-            }
+            print(f"File uploaded successfully: {uploaded_file['name']} (ID: {uploaded_file['id']})")
 
-            srv, err := drive.New(config.Client(ctx))
-            if err != nil {
-                log.Fatalf("Unable to retrieve Drive client: %v", err)
-            }
+        if __name__ == "__main__":
+            main()
+        ' > sync_files.py
 
-            folderId := os.Getenv("GDRIVE_FOLDER_ID")
-            if folderId == "" {
-                log.Fatalf("No folder ID found in environment variables")
-            }
-
-            // Specify the file to upload
-            filePath := "data/my_file.txt"  // Modify as needed
-            uploadedFile, err := uploadFile(srv, filePath, folderId)
-            if err != nil {
-                log.Fatalf("Unable to upload file: %v", err)
-            }
-
-            fmt.Printf("File uploaded successfully: %s (ID: %s)\n", uploadedFile.Name, uploadedFile.Id)
-        }
-        ' > sync_files.go
-
-    - name: Run the Go script to upload files
+    - name: Run the Python script to upload files
       run: |
-        go run sync_files.go
+        python sync_files.py
 
     - name: Clean up
       run: |
         # Clean up any temporary files if needed
-        rm sync_files.go
+        rm sync_files.py
