@@ -18,51 +18,97 @@ jobs:
       with:
         credentials_json: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_KEY }}
 
-    - name: Install gdrive CLI
+    - name: Set up Go environment
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.19'  # Adjust to your Go version
+
+    - name: Install dependencies
       run: |
-        # Ensure wget is installed and update system
-        sudo apt-get update -y
-        sudo apt-get install wget -y
-        sudo apt-get install unzip -y  # Install unzip in case we use zip files
-        sudo apt-get install golang-go -y  # Install Go to build gdrive from source
-
-        # Clear previous installations of gdrive (just in case)
-        sudo rm -f /usr/local/bin/gdrive
-
-        # Download the tar.gz release of gdrive from the GitHub releases page
-        wget https://github.com/prasmussen/gdrive/archive/refs/tags/2.1.0.tar.gz -O /tmp/gdrive-linux-x64.tar.gz
-
-        # Extract the tar.gz file
-        tar -xzvf /tmp/gdrive-linux-x64.tar.gz -C /tmp
-
-        # Navigate to the extracted folder
-        cd /tmp/gdrive-2.1.0
-
-        # Initialize the Go module
-        go mod init github.com/prasmussen/gdrive
-
-        # Add replace directives for the problematic dependencies
-        cat <<EOT >> go.mod
-        replace github.com/sabhiram/go-git-ignore => github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
-        EOT
-
-        # Tidy up dependencies (fetch required modules)
         go mod tidy
+        go mod vendor
 
-        # Build the binary
-        go build -o /usr/local/bin/gdrive gdrive.go
-
-        # Verify the gdrive installation
-        gdrive version
-
-    - name: Move data folder to temporary location
+    - name: Create Go script to upload files
       run: |
-        mv data /tmp/data_backup
+        # Create the Go script to sync files to Google Drive
+        echo '
+        package main
 
-    - name: Upload to Google Drive
-      run: |
-        gdrive upload --recursive . --folder ${{ secrets.GDRIVE_FOLDER_ID }}
+        import (
+            "context"
+            "fmt"
+            "log"
+            "os"
+            "path/filepath"
 
-    - name: Move data folder back
+            "google.golang.org/api/drive/v3"
+            "google.golang.org/api/googleapi"
+            "golang.org/x/oauth2/google"
+        )
+
+        func uploadFile(srv *drive.Service, filePath string, folderId string) (*drive.File, error) {
+            file, err := os.Open(filePath)
+            if err != nil {
+                return nil, err
+            }
+            defer file.Close()
+
+            fileName := filepath.Base(filePath)
+            fileMetadata := &drive.File{
+                Name:    fileName,
+                Parents: []string{folderId},
+            }
+
+            fileRes, err := srv.Files.Create(fileMetadata).
+                Media(file).
+                Fields("id, name").
+                Do()
+            if err != nil {
+                return nil, err
+            }
+            return fileRes, nil
+        }
+
+        func main() {
+            ctx := context.Background()
+
+            // Create the Drive service
+            b, err := os.ReadFile("data/darklyspeakingdexter-c637f22f8d1c.json")
+            if err != nil {
+                log.Fatalf("Unable to read service account credentials file: %v", err)
+            }
+
+            config, err := google.JWTConfigFromJSON(b, drive.DriveFileScope)
+            if err != nil {
+                log.Fatalf("Unable to parse service account credentials: %v", err)
+            }
+
+            srv, err := drive.New(config.Client(ctx))
+            if err != nil {
+                log.Fatalf("Unable to retrieve Drive client: %v", err)
+            }
+
+            folderId := os.Getenv("GDRIVE_FOLDER_ID")
+            if folderId == "" {
+                log.Fatalf("No folder ID found in environment variables")
+            }
+
+            // Specify the file to upload
+            filePath := "data/my_file.txt"  // Modify as needed
+            uploadedFile, err := uploadFile(srv, filePath, folderId)
+            if err != nil {
+                log.Fatalf("Unable to upload file: %v", err)
+            }
+
+            fmt.Printf("File uploaded successfully: %s (ID: %s)\n", uploadedFile.Name, uploadedFile.Id)
+        }
+        ' > sync_files.go
+
+    - name: Run the Go script to upload files
       run: |
-        mv /tmp/data_backup data
+        go run sync_files.go
+
+    - name: Clean up
+      run: |
+        # Clean up any temporary files if needed
+        rm sync_files.go
