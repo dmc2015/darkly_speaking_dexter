@@ -9,8 +9,9 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - name: Checkout code  # This is crucial - it gets your actual branch files
+        uses: actions/checkout@v3
+        
       - name: Install rclone
         run: |
           curl https://rclone.org/install.sh | sudo bash
@@ -20,16 +21,9 @@ jobs:
           mkdir -p ~/.config/rclone
           echo '${{ secrets.RCLONE_CONFIG }}' > ~/.config/rclone/rclone.conf
           
-      - name: Test Drive listing and path
-        run: |
-          echo "Listing root of Google Drive:"
-          rclone lsd gdrive:
-          echo "Checking if target path exists:"
-          rclone lsd "gdrive:MyDrive"
-          
       - name: Sync files to Google Drive
         run: |
-          echo "Current directory contents:"
-          ls -la
-          echo "Starting sync with -v flag for verbose output:"
-          rclone sync . "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter" -v
+          pwd
+          ls -la  # Let's see what files we actually have
+          echo "Starting sync..."
+          rclone sync . "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter" -v --exclude=.git/**
