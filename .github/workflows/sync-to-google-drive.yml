@@ -1,4 +1,4 @@
-name: Sync to Google Drive
+name: Test Google Drive Connection
 
 on:
   push:
@@ -6,11 +6,9 @@ on:
       - gpt-2
 
 jobs:
-  sync:
+  test-connection:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
       - name: Install rclone
         run: |
           curl https://rclone.org/install.sh | sudo bash
@@ -18,7 +16,9 @@ jobs:
       - name: Setup rclone config
         run: |
           mkdir -p ~/.config/rclone
-          echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
+          echo '${{ secrets.RCLONE_CONFIG }}' > ~/.config/rclone/rclone.conf
+          cat ~/.config/rclone/rclone.conf  # This will help us see what's actually in the config
           
-      - name: Sync files to Google Drive
-        run: rclone sync . "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter"
+      - name: Test Drive connection
+        run: |
+          rclone lsd gdrive:
