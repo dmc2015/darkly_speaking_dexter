@@ -21,4 +21,4 @@ jobs:
           echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
           
       - name: Sync files to Google Drive
-        run: rclone sync . gdrive:your-folder-path
+        run: rclone sync . "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter"
