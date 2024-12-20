@@ -43,8 +43,7 @@ jobs:
 
         # Add replace directives for the problematic dependencies
         cat <<EOT >> go.mod
-        replace github.com/sabhiram/go-git-ignore => github.com/sabhiram/go-git-ignore v0.0.0-20210923224102-525f6e181f06
-        replace github.com/sabhiram/go-gitignore => github.com/sabhiram/go-git-ignore v0.0.0-20210923224102-525f6e181f06
+        replace github.com/sabhiram/go-git-ignore => github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
         EOT
 
         # Tidy up dependencies (fetch required modules)
