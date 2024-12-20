@@ -7,3 +7,6 @@
 #### Script: Chatbot_Training_GPT2_Preprocessing.ipnynb
 ##### Dependencies: character_name_utils + transcript_validator
 
+## Training - dexter-training-colab.py / dexter_colab_training.ipynb
+#### Script: Chatbot_Training_GPT2_Preprocessing.ipnynb
+##### Dependencies: character_name_utils + transcript_validator
