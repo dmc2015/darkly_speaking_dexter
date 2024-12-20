@@ -16,9 +16,21 @@ jobs:
       - name: Setup rclone config
         run: |
           mkdir -p ~/.config/rclone
-          echo '${{ secrets.RCLONE_CONFIG }}' > ~/.config/rclone/rclone.conf
-          cat ~/.config/rclone/rclone.conf  # This will help us see what's actually in the config
+          # Write config with explicit newlines
+          cat > ~/.config/rclone/rclone.conf << 'EOL'
+            ${{ secrets.RCLONE_CONFIG }}
+          EOL
+          # Check config format
+          echo "Config file contents:"
+          cat ~/.config/rclone/rclone.conf
+          echo "Config file permissions:"
+          ls -l ~/.config/rclone/rclone.conf
           
       - name: Test Drive connection
         run: |
+          echo "Testing rclone version:"
+          rclone version
+          echo "Testing drive connection:"
+          rclone listremotes
+          echo "Testing drive listing:"
           rclone lsd gdrive:
