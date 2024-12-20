@@ -23,7 +23,7 @@ jobs:
           
       - name: Aggressive sync to Google Drive
         run: |
-          rclone sync . "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter" \
+          rclone sync . "gdrive:MyDrive/Colab Notebooks/dex" \
             -v \
             --exclude=.git/** \
             --refresh-times \
