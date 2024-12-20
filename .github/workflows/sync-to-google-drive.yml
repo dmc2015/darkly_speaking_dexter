@@ -24,6 +24,7 @@ jobs:
         sudo apt-get update -y
         sudo apt-get install wget -y
         sudo apt-get install unzip -y  # Install unzip in case we use zip files
+        sudo apt-get install golang-go -y  # Install Go to build gdrive from source
 
         # Clear previous installations of gdrive (just in case)
         sudo rm -f /usr/local/bin/gdrive
@@ -34,11 +35,11 @@ jobs:
         # Extract the tar.gz file
         tar -xzvf /tmp/gdrive-linux-x64.tar.gz -C /tmp
 
-        # List the contents of /tmp to inspect where gdrive is extracted
-        ls -la /tmp
+        # Navigate to the extracted folder
+        cd /tmp/gdrive-2.1.0
 
-        # Move the binary to the local bin directory (adjusting path based on the ls output)
-        sudo mv /tmp/gdrive-2.1.0/gdrive /usr/local/bin/gdrive
+        # Explicitly build the binary using gdrive.go
+        go build -o /usr/local/bin/gdrive gdrive.go
 
         # Verify the gdrive installation
         gdrive version
