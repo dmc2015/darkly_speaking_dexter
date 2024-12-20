@@ -1,63 +1,24 @@
-name: Sync Files with Google Drive
+name: Sync to Google Drive
 
 on:
   push:
     branches:
-      - gpt-2  # Adjust to your desired branch
+      - gpt-2
 
 jobs:
-  sync_to_drive:
+  sync:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout the code
-      uses: actions/checkout@v2
-
-    - name: Set up Google Cloud authentication
-      uses: google-github-actions/auth@v1
-      with:
-        credentials_json: ${{ secrets.GDRIVE_SERVICE_ACCOUNT_KEY }}  # Use the GitHub secret for authentication
-
-    - name: Install Python and dependencies
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.x'
-
-    - name: Install Google API client and dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install google-auth google-auth-oauthlib google-auth-httplib2 google-api-python-client
-
-    - name: Upload file to Google Drive
-      run: |
-        # Run the script to upload a file to Google Drive
-        python -c "
-        import os
-        from google.auth.transport.requests import Request
-        from googleapiclient.discovery import build
-        from googleapiclient.http import MediaFileUpload
-        from google.oauth2.service_account import Credentials
-
-        def authenticate_and_upload():
-            # Authenticate using the credentials from the GitHub Secret
-            credentials = Credentials.from_service_account_info(
-                os.getenv('GDRIVE_SERVICE_ACCOUNT_KEY'), scopes=['https://www.googleapis.com/auth/drive.file']
-            )
-            if credentials.expired and credentials.refresh_token:
-                credentials.refresh(Request())
-            
-            # Build Google Drive API client
-            service = build('drive', 'v3', credentials=credentials)
-
-            # Get the folder ID and file path from environment variables or defaults
-            folder_id = os.getenv('GDRIVE_FOLDER_ID', 'your-folder-id')
-            file_path = 'data/my_file.txt'  # Modify as needed
-            
-            # Upload the file
-            media = MediaFileUpload(file_path, resumable=True)
-            file_metadata = {'name': os.path.basename(file_path), 'parents': [folder_id]}
-            file = service.files().create(body=file_metadata, media_body=media, fields='id').execute()
-            print(f'File uploaded successfully: {file["id"]}')
-
-        authenticate_and_upload()
-        "
+      - uses: actions/checkout@v3
+      
+      - name: Install rclone
+        run: |
+          curl https://rclone.org/install.sh | sudo bash
+          
+      - name: Setup rclone config
+        run: |
+          mkdir -p ~/.config/rclone
+          echo "${{ secrets.RCLONE_CONFIG }}" > ~/.config/rclone/rclone.conf
+          
+      - name: Sync files to Google Drive
+        run: rclone sync . gdrive:your-folder-path
