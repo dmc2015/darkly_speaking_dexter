@@ -21,20 +21,21 @@ jobs:
           mkdir -p ~/.config/rclone
           echo '${{ secrets.RCLONE_CONFIG }}' > ~/.config/rclone/rclone.conf
           
-      - name: Check Google Drive paths
+      - name: Aggressive sync to Google Drive
         run: |
-          echo "Root contents:"
-          rclone lsd gdrive:
-          echo "\nMyDrive contents:"
-          rclone lsd "gdrive:MyDrive"
-          echo "\nColab Notebooks contents:"
-          rclone lsd "gdrive:MyDrive/Colab Notebooks"
-          echo "\nTarget folder contents:"
-          rclone ls "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter"
-          
-      - name: Sync files to Google Drive
-        run: |
-          pwd
-          ls -la
-          echo "Starting sync..."
-          rclone sync . "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter" -v --exclude=.git/** --refresh-times
+          rclone sync . "gdrive:MyDrive/Colab Notebooks/darkly_speaking_dexter" \
+            -v \
+            --exclude=.git/** \
+            --refresh-times \
+            --checksum \
+            --update \
+            --create-empty-src-dirs \
+            --track-renames \
+            --fast-list \
+            --transfers=32 \
+            --checkers=32 \
+            --drive-chunk-size=32M \
+            --drive-acknowledge-abuse \
+            --drive-allow-import-name-change \
+            --ignore-size \
+            -P
