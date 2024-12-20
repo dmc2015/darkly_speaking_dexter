@@ -38,7 +38,13 @@ jobs:
         # Navigate to the extracted folder
         cd /tmp/gdrive-2.1.0
 
-        # Explicitly build the binary using gdrive.go
+        # Initialize the Go module
+        go mod init github.com/prasmussen/gdrive
+
+        # Tidy up dependencies (fetch required modules)
+        go mod tidy
+
+        # Build the binary
         go build -o /usr/local/bin/gdrive gdrive.go
 
         # Verify the gdrive installation
