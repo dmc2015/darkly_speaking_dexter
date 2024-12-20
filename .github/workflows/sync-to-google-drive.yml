@@ -21,21 +21,25 @@ jobs:
           mkdir -p ~/.config/rclone
           echo '${{ secrets.RCLONE_CONFIG }}' > ~/.config/rclone/rclone.conf
           
-      - name: Aggressive sync to Google Drive
+      - name: Debug checks
+        run: |
+          echo "Testing Google Drive access..."
+          rclone lsd gdrive:
+          echo "\nTesting target folder..."
+          rclone mkdir "gdrive:MyDrive/Colab Notebooks/dex"
+          echo "\nListing current directory..."
+          ls -la
+          echo "\nTrying to copy a single file..."
+          rclone copyto readme.md "gdrive:MyDrive/Colab Notebooks/dex/readme.md" -v
+          
+      - name: Force sync to Google Drive
         run: |
           rclone sync . "gdrive:MyDrive/Colab Notebooks/dex" \
             -v \
-            --exclude=.git/** \
-            --refresh-times \
+            --ignore-existing \
+            --ignore-times \
+            --no-update-modtime \
             --checksum \
-            --update \
-            --create-empty-src-dirs \
-            --track-renames \
-            --fast-list \
-            --transfers=32 \
-            --checkers=32 \
-            --drive-chunk-size=32M \
-            --drive-acknowledge-abuse \
-            --drive-allow-import-name-change \
-            --ignore-size \
+            --verbose \
+            --transfers=1 \
             -P
