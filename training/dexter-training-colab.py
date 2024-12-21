@@ -1,7 +1,7 @@
 # Title: Dexter GPT-2 Training
 
 # Install required packages
-!pip install torch transformers datasets
+# pip install torch transformers datasets
 
 # Verify GPU is available
 import torch
@@ -14,6 +14,14 @@ from transformers import TextDataset, DataCollatorForLanguageModeling
 from transformers import Trainer, TrainingArguments
 import json
 
+def is_colab() -> None:
+    try:
+        import google.colab
+        return True
+    except ImportError:
+        return False
+
+
 # Load tokenizer
 tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
 tokenizer.pad_token = tokenizer.eos_token
@@ -23,6 +31,13 @@ model = GPT2LMHeadModel.from_pretrained('gpt2')
 
 # Upload and load your data
 # TODO: Upload gpt2_training_data.json to Colab first
+
+if is_colab()
+    log_path = "/content/darkly_speaking_dexter/logs"
+    transcript_path = "/content/darkly_speaking_dexter/" + transcript_path
+else:
+    log_path = "./logs"
+
 with open('gpt2_training_data.json', 'r') as f:
     training_data = json.load(f)
 

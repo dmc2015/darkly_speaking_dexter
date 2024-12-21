@@ -5,15 +5,37 @@ import logging
 from transformers import GPT2Tokenizer
 import pdb
 
+
+def is_colab():
+    try:
+        import google.colab
+        return True
+    except ImportError:
+        return False
+
 class DexterGPT2Preprocessor:
     def __init__(self, training_data_path: str = "data/chatbot_training_data.json"):
+        if is_colab():
+            log_path = "/content/darkly_speaking_dexter/logs"
+            training_data_path = "/content/darkly_speaking_dexter/" + training_data_path
+        else:
+            log_path = "./logs"
+        
         self.training_data_path = Path(training_data_path)
         self.tokenizer = GPT2Tokenizer.from_pretrained('gpt2')
         self.tokenizer.pad_token = self.tokenizer.eos_token
-        
-        logging.basicConfig(level=logging.INFO)
+
+
+
+
+        # Setup logging
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(levelname)s - %(message)s",
+            handlers=[logging.FileHandler(log_path + "/gpt_processing.log"), logging.StreamHandler()],
+        )
         self.logger = logging.getLogger(__name__)
-        
+
     def load_training_data(self) -> List[Dict]:
         """Load the chat training samples."""
         with open(self.training_data_path, 'r', encoding='utf-8') as f:
@@ -62,6 +84,7 @@ class DexterGPT2Preprocessor:
             }
         }
         
+        output_path = "/content/darkly_speaking_dexter/" + output_path
         with open(output_path, 'w', encoding='utf-8') as f:
             json.dump(output_obj, f, indent=2)
         
